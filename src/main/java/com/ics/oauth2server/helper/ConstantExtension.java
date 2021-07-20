@@ -24,6 +24,7 @@ public class ConstantExtension {
      * */
 
     public static String USER_EMPTY_LIST = "There are no users";
+    public static String USER_ACCOUNT_NOT_EXIST = "User does not exist!";
 
     /**
      *
@@ -32,6 +33,7 @@ public class ConstantExtension {
      * */
 
     public static String EMAIL_VERIFICATION_FAILED = "Email verification failed";
+    public static String EMAIL_VERIFICATION_SENT = "Verification email sent";
     public static String EMAIL_OTP_SENT = "OTP sent successfully to your registered e-mail id";
     public static String PHONE_OTP_SENT = "OTP sent successfully to your registered mobile number";
     public static String WRONG_OTP = "Either OTP is invalid or has been expired";

@@ -12,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping(
         path = "${api.version}/user-account/",
@@ -41,11 +43,12 @@ public class UserAccountController {
     ResponseEntity<APIResponse<ForgotPasswordResponse>> forgotPassword(@PathVariable(name = "userId",required = false) Long userId,
                                                                        @PathVariable(name = "username",required = false) String username,
                                                                        @RequestParam(name = "verificationType", required = true) String verificationType,
-                                                                       CustomPrincipal principal){
+                                                                       CustomPrincipal principal,
+                                                                       HttpServletRequest httpServletRequest){
         if (helperExtension.isNullOrEmpty(userId)){
             userId = 0L;
         }
-        apiResponse = userAccountService.forgotPassword(userId,username,verificationType,principal);
+        apiResponse = userAccountService.forgotPassword(userId,username,verificationType,principal,httpServletRequest);
         return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
     }
 

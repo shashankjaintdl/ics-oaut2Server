@@ -18,6 +18,7 @@ import com.ics.oauth2server.security.token.SecureTokenService;
 import com.ics.oauth2server.security.token.repository.SecureTokenRepository;
 import com.ics.oauth2server.security.twilio.request.SMSRequest;
 import com.ics.oauth2server.security.twilio.service.TwilioService;
+import com.ics.oauth2server.user.services.UserService;
 import com.ics.oauth2server.useraccount.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +51,7 @@ public class UserAccountServiceImpl implements UserAccountService{
     private final TwilioService twilioService;
     private final SecureTokenService secureTokenService;
     private final SecureTokenRepository secureTokenRepository;
+    private final UserService userService;
 
     @Autowired
     public UserAccountServiceImpl(UserAccountRepository userAccountRepository,
@@ -57,9 +60,11 @@ public class UserAccountServiceImpl implements UserAccountService{
                                   OTPService OTPService,
                                   OTPRepository smsRepository,
                                   EmailServices emailServices,
-                                  TwilioService twilioService) {
+                                  TwilioService twilioService,
+                                  UserService userService) {
         this.userAccountRepository = userAccountRepository;
         this.OTPService = OTPService;
+        this.userService = userService;
         this.secureTokenService = secureTokenService;
         this.secureTokenRepository = secureTokenRepository;
         this.smsRepository = smsRepository;
@@ -68,33 +73,40 @@ public class UserAccountServiceImpl implements UserAccountService{
     }
 
     @Override
-    public APIResponse<ForgotPasswordResponse> forgotPassword(Long id, 
-                                                              String username, 
-                                                              String verificationType, 
-                                                              CustomPrincipal principal) {
+    public APIResponse<ForgotPasswordResponse> forgotPassword(Long id,
+                                                              String username,
+                                                              String verificationType,
+                                                              CustomPrincipal principal,
+                                                              HttpServletRequest httpServletRequest) {
+        String message = "";
         forgotPasswordResponses = new ArrayList<>();
         userAccounts = userAccountRepository.get(id,username,null,null,null);
         if (!userAccounts.isEmpty()){
-            if(userAccounts.get(0).isFlag()){
+            if(!userAccounts.get(0).isFlag()){
                 // Throw User does not exist
+                return new APIResponse<>(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.toString(),ConstantExtension.USER_ACCOUNT_NOT_EXIST,forgotPasswordResponses,httpServletRequest);
             }
-            if(userAccounts.get(0).isAccountVerified()){
+            if(!userAccounts.get(0).isAccountVerified()){
                 // send verification email to verify his account
+                message = ConstantExtension.EMAIL_VERIFICATION_SENT;
+                userService.sendRegistrationConfirmationEmail(userAccounts.get(0));
             }
-            ForgotPasswordResponse response = new ForgotPasswordResponse();
-            response.setUsername(userAccounts.get(0).getUsername());
-            response.setId(userAccounts.get(0).getId());
-            forgotPasswordResponses.add(response);
-            if(verificationType.equalsIgnoreCase("email")){
-                sendEmailOfGeneratedOTP(otpLength,userAccounts.get(0));
+            else {
+                ForgotPasswordResponse response = new ForgotPasswordResponse();
+                response.setUsername(userAccounts.get(0).getUsername());
+                response.setId(userAccounts.get(0).getId());
+                forgotPasswordResponses.add(response);
+                if (verificationType.equalsIgnoreCase("email")) {
+                    message = ConstantExtension.EMAIL_OTP_SENT;
+                    sendEmailOfGeneratedOTP(otpLength, userAccounts.get(0));
+                } else if (verificationType.equalsIgnoreCase("phone")) {
+                    message = ConstantExtension.PHONE_OTP_SENT;
+                    sendSMSOfGeneratedOTP(otpLength, userAccounts.get(0));
+                } else {
+                    throw new IllegalStateException("Select Correct Option");
+                }
             }
-            else if(verificationType.equalsIgnoreCase("phone")){
-                sendSMSOfGeneratedOTP(otpLength,userAccounts.get(0));
-            }
-            else{
-                throw new IllegalStateException("Select Correct Option");
-            }
-            return new APIResponse<>(HttpStatus.OK.value(), HttpStatus.OK.toString(), ConstantExtension.MAIL_SENT_FOR_PASSWORD_GENERATION,forgotPasswordResponses);
+            return new APIResponse<>(HttpStatus.CREATED.value(), HttpStatus.CREATED.toString(),message,forgotPasswordResponses,httpServletRequest);
         }
         return new APIResponse<>(HttpStatus.OK.value(), HttpStatus.OK.toString(),"User does not exist!",forgotPasswordResponses);
     }
@@ -118,17 +130,19 @@ public class UserAccountServiceImpl implements UserAccountService{
                 if (!userAccount.isFlag()){
                     throw new IllegalStateException("User does not exist! contact to support team");
                 }
-                userAccount.setAccountNonLocked(false);
-                OTPService.removeOTP(secureOTP.get());
-                userAccountRepository.save(userAccount);
-                // Generating unique secure token to reset the password for every user
-                SecureToken secureToken= secureTokenService.createSecureToken();
-                secureToken.setUserAccount(userAccount);
-
-                secureTokenRepository.save(secureToken);
-
-                otpVerificationResponses.add(getOtpVerificationResponse(userAccount, secureToken));
-
+                try {
+                    userAccount.setAccountNonLocked(false);
+                    OTPService.removeOTP(secureOTP.get());
+                    userAccountRepository.save(userAccount);
+                    // Generating unique secure token to reset the password for every user
+                    SecureToken secureToken = secureTokenService.createSecureToken();
+                    secureToken.setUserAccount(userAccount);
+                    secureTokenRepository.save(secureToken);
+                    otpVerificationResponses.add(getOtpVerificationResponse(userAccount, secureToken));
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
                 return new APIResponse<>(HttpStatus.OK.value(), HttpStatus.OK.toString(),ConstantExtension.SUCCESS,otpVerificationResponses);
             }
             return new APIResponse<>(HttpStatus.OK.value(),HttpStatus.OK.toString(),ConstantExtension.USER_NOT_EXIST,otpVerificationResponses);

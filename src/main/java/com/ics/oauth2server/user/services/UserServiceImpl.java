@@ -121,7 +121,8 @@ public class UserServiceImpl implements UserService{
         sendRegistrationConfirmationEmail(userAccount);
     }
 
-    private void sendRegistrationConfirmationEmail(UserAccount user) {
+    @Override
+    public void sendRegistrationConfirmationEmail(UserAccount user) {
         LOGGER.info("sending the confirmation Email to verify the account");
         SecureToken secureToken= secureTokenService.createSecureToken();
         secureToken.setUserAccount(user);
