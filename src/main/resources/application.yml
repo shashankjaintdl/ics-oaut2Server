@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: authenticationAppServer
+
+api:
+  version: /api/v1
+
+server:
+  port: 8080
+  servlet:
+    context-path: /authenticationAppServer
+
+security:
+  oauth2:
+    resource:
+      jwt:
+        key-value: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgnEzp25qlRJqe/IWf88o
+          lfkOl9a7tX4wgDrLLzguzMIAHdLv2do1qb48nPJPJYElD6wVTguokOTOND+4oFzJ
+          Oob/t/6cQ65gPCXVo8OfN1jrternBEIu9t2FuSmn/Ica+JvIZ4NJFz1UnxY1fYGv
+          WMjsMwpOZk8uU39Pu8ywyyaRPXYi0Sbk8vj35GjdwkhshBOUaE45JlZpBms6HerY
+          45TBbHTiC9hFQ8slwEd8DIsLYhSlogmCC7hciOVlNEJxUoumq1M20wlizkWhxCyM
+          Q/5OZMLDBzhK7+lgp9M3ZUdJFOgNKbkR/gdktWC4RZxp90t+Ztct6pHoNz5K/0ji
+          ZwIDAQAB
+          -----END PUBLIC KEY-----
+
+logging:
+  level:
+    org.springframework: INFO
+    org.springframework.web.servlet: DEBUG
+
+aws:
+  awsId: AKIA4KKLS7OTZ3EQV3G4
+  awsKey: AD9tkHJVcVIZ394/eORHvpJaGGoarUWGEJPp
+  s3:
+    region: ap-south-1
+    bucketName: oauth2testbucket
