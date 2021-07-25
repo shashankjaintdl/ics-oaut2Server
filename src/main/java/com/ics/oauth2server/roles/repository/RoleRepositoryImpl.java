@@ -1,8 +1,7 @@
-package com.ics.oauth2server.role.repository;
+package com.ics.oauth2server.roles.repository;
 
 import com.ics.oauth2server.common.entities.Roles;
 import com.ics.oauth2server.helper.BaseRepositoryImpl;
-import com.ics.oauth2server.helper.ConstantExtension;
 import com.ics.oauth2server.helper.HelperExtension;
 import org.springframework.stereotype.Repository;
 
@@ -20,19 +19,39 @@ public class RoleRepositoryImpl extends BaseRepositoryImpl<Roles> implements Rol
 
     @PersistenceContext
     private EntityManager entityManager;
-    ConstantExtension constantExtension = new ConstantExtension();
+    List<Predicate> predicateList;
     HelperExtension helperExtension = new HelperExtension();
 
     @Override
-    public Boolean existByName(String name) {
+    public List<Roles> get(Long id, String name) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Roles> criteriaQuery = criteriaBuilder.createQuery(Roles.class);
+        Root<Roles> root = criteriaQuery.from(Roles.class);
+        predicateList = new ArrayList<>();
+        if(id>0){
+            predicateList.add(criteriaBuilder.equal(root.get("id"),id));
+        }
+        if(!helperExtension.isNullOrEmpty(name)){
+            predicateList.add(criteriaBuilder.equal(root.get("name"),name));
+        }
+        criteriaQuery.where(criteriaBuilder.and(predicateList.toArray(new Predicate[predicateList.size()])));
+        return entityManager.createQuery(criteriaQuery).getResultList();
+    }
+
+    @Override
+    public Boolean isExist(Long id,String name) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Roles> criteriaQuery = criteriaBuilder.createQuery(Roles.class);
         Root<Roles> root = criteriaQuery.from(Roles.class);
         List<Predicate> predicateList = new ArrayList<>();
         if(!helperExtension.isNullOrEmpty(name)){
             predicateList.add(criteriaBuilder.equal(root.get("name"),name));
+            criteriaQuery.where(criteriaBuilder.and(predicateList.toArray(new Predicate[predicateList.size()])));
+            if (entityManager.createQuery(criteriaQuery).getResultList().size() > 0) {
+                return true;
+            }
         }
-        return null;
+        return false;
     }
 
 

@@ -1,5 +1,4 @@
-package com.ics.oauth2server.security.response;
-
+package com.ics.oauth2server.useraccount.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +6,8 @@ import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
-public @Data class ForgotPasswordResponse {
+public @Data class ChangePasswordResponse {
     private Long id;
     private String username;
+    private String emailId;
 }

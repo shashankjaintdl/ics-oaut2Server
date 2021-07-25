@@ -15,7 +15,7 @@ public @Data class User extends BaseEntity implements Serializable {
     @GenericGenerator(strategy = "native", name = "native")
     private long id;
 
-    @Column(name = "email_id")
+    @Column(name = "email_id",unique = true)
     private String emailId;
 
     @Column(name = "username",unique = true,updatable = false)

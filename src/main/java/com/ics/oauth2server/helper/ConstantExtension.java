@@ -6,6 +6,7 @@ public class ConstantExtension {
     // User Account Messages
     public static String ACCOUNT_CREATION_FAILED = "Account creation failed";
     public static String ACCOUNT_ALREADY_EXIST = "Account already exist";
+    public static String ACCOUNT_NOT_EXIST = "Account does not exist";
     public static String ACCOUNT_ID_ALREADY_EXIST = "Id already exist";
     public static String ACCOUNT_SUCCESS_CREATED = "Account has been create successfully";
     public static String ACCOUNT_UPDATED_SUCCESS = "Account has been updated successfully";
@@ -15,6 +16,8 @@ public class ConstantExtension {
     public static String ACCOUNT_DISABLED = "Account has been disabled";
     public static String ACCOUNT_LOCKED = "Your account is locked after multiple attempts";
     public static String ACCOUNT_PASSWORD_EXPIRED = "Account password has been expired";
+    public static String ACCOUNT_PASSWORD_NOT_MATCH = "Password does not match";
+
 
 
     /**

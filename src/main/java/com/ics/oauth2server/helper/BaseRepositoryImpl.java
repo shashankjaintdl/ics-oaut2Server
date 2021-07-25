@@ -122,21 +122,21 @@ public abstract class BaseRepositoryImpl<E> implements BaseRepository<E> {
 
     @Override
     public void flush() {
-        if (session.getTransaction().isActive()) {
+        if (session.getTransaction().isActive() || session.isOpen() ) {
             session.flush();
         }
     }
 
     @Override
     public void close() {
-        if (session.getTransaction().isActive()) {
+        if (session.getTransaction().isActive() || session.isOpen()) {
             session.getTransaction().commit();
         }
     }
 
     @Override
     public void rollback() {
-        if (session.getTransaction().isActive()) {
+        if (session.getTransaction().isActive() || session.isOpen()) {
             session.getTransaction().rollback();
         }
     }

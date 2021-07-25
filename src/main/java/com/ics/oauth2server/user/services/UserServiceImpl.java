@@ -8,9 +8,9 @@ import com.ics.oauth2server.helper.APIResponse;
 import com.ics.oauth2server.helper.ConstantExtension;
 import com.ics.oauth2server.helper.DatabaseHelper;
 import com.ics.oauth2server.helper.HelperExtension;
+import com.ics.oauth2server.roles.repository.RoleRepository;
 import com.ics.oauth2server.security.email.EmailServices;
 import com.ics.oauth2server.security.email.context.AccountVerificationEmailContext;
-import com.ics.oauth2server.security.repository.UserAccountRepository;
 import com.ics.oauth2server.security.token.SecureTokenService;
 import com.ics.oauth2server.security.token.repository.SecureTokenRepository;
 import com.ics.oauth2server.user.UserMapper;
@@ -18,6 +18,7 @@ import com.ics.oauth2server.user.UserRequest;
 import com.ics.oauth2server.user.exception.UserAlreadyExistException;
 import com.ics.oauth2server.user.repository.UserJPARepository;
 import com.ics.oauth2server.user.repository.UserRepository;
+import com.ics.oauth2server.useraccount.repository.UserAccountRepository;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,7 @@ public class UserServiceImpl implements UserService{
     private final SecureTokenService secureTokenService;
     private final SecureTokenRepository secureTokenRepository;
     private final EmailServices emailServices;
+    private final RoleRepository roleRepository;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository,
@@ -66,7 +68,9 @@ public class UserServiceImpl implements UserService{
                            UserJPARepository userJPARepository,
                            SecureTokenRepository secureTokenRepository,
                            SecureTokenService secureTokenService,
-                           EmailServices emailServices) {
+                           EmailServices emailServices,
+                           RoleRepository roleRepository
+                           ) {
         this.userRepository = userRepository;
         this.userJPARepository = userJPARepository;
         this.userAccountRepository = userAccountRepository;
@@ -74,6 +78,7 @@ public class UserServiceImpl implements UserService{
         this.secureTokenRepository = secureTokenRepository;
         this.secureTokenService  = secureTokenService;
         this.emailServices =  emailServices;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -81,8 +86,9 @@ public class UserServiceImpl implements UserService{
         list = new ArrayList<>();
         User user = mapper.map(userRequest);
         String message = userRepository.exist(user);
-        if(!helperExtension.isNullOrEmpty(message)){
-            throw new UserAlreadyExistException(message);
+        List<UserAccount> userAccounts = userAccountRepository.get(0L,userRequest.getUsername(),userRequest.getEmailId(),null,null);
+        if(!helperExtension.isNullOrEmpty(message) || !userAccounts.isEmpty()){
+            throw new UserAlreadyExistException(ConstantExtension.ACCOUNT_ALREADY_EXIST+  "With username = "+ user.getUsername());
         }
         try {
             user.setCreatedDate(currentDate);
@@ -110,12 +116,12 @@ public class UserServiceImpl implements UserService{
         userAccount.setEmail(user.getEmailId());
         userAccount.setPhoneNo(user.getPhoneNo());
         userAccount.setPassword(passwordEncoder.encode(password));
-        List<Roles> rolesList = new ArrayList<>();
-        Roles roles = new Roles();
-        roles.setId(2);
-        rolesList.add(roles);
+//        List<Roles> rolesList = new ArrayList<>();
+        List<Roles> roles = roleRepository.get(0L,"ROLE_USER");
+//        roles.setId(role.getId());
+//        rolesList.add(roles);
         userAccount.setUserId(user.getId());
-        userAccount.setRoles(rolesList);
+        userAccount.setRoles(roles);
         userAccount.setFlag(true);
         userAccountRepository.save(userAccount);
         sendRegistrationConfirmationEmail(userAccount);
@@ -143,10 +149,15 @@ public class UserServiceImpl implements UserService{
         list = new ArrayList<>();
         list = userRepository.get(id,username,null,true,null);
         if(list.size()>0){
-            Boolean userDeleted = userRepository.deleteById(User.class,list.get(0).getId());
-            if(userDeleted) {
+            List<UserAccount> userAccounts =  userAccountRepository.get(0L,list.get(0).getUsername(),null,null,null);
+            if(!userAccounts.isEmpty()){
+                list.get(0).setIsFlag(false);
+                userAccounts.get(0).setFlag(false);
+                userRepository.saveOrUpdate(list.get(0));
+                userAccountRepository.saveOrUpdate(userAccounts.get(0));
                 return new APIResponse<>(HttpStatus.OK.value(), HttpStatus.OK.toString(), ConstantExtension.ACCOUNT_SUCCESS_DELETED, list);
             }
+//          Boolean userDeleted = userRepository.deleteById(User.class,list.get(0).getId());
         }
         return new APIResponse<>(HttpStatus.NOT_FOUND.value(),HttpStatus.NOT_FOUND.toString(),ConstantExtension.ACCOUNT_DELETION_FAILED,list);
     }

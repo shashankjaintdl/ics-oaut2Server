@@ -15,7 +15,7 @@ public @Data class Permission {
     @GenericGenerator(strategy = "native", name = "native")
     private long id;
 
-    @Column(name = "permission_type")
+    @Column(name = "permission_type",unique = true)
     private String name;
 
 }

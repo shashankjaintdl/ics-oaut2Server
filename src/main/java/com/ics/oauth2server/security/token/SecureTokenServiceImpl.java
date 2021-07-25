@@ -52,9 +52,9 @@ public class SecureTokenServiceImpl implements SecureTokenService{
     @Override
     public SecureToken findByToken(String token) {
         SecureToken secureToken = secureTokenRepository.findByToken(token);
-        if(secureToken==null){
-            throw new IllegalStateException("Token either expired or does not exist");
-        }
+//        if(secureToken==null){
+//            throw new IllegalStateException("Token either expired or does not exist");
+//        }
         return secureToken;
     }
 

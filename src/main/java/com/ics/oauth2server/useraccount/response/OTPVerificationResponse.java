@@ -1,4 +1,4 @@
-package com.ics.oauth2server.security.response;
+package com.ics.oauth2server.useraccount.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

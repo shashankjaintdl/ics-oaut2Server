@@ -10,7 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "user_accounts")
-public class UserAccount implements UserDetails{
+public class UserAccount extends BaseEntity implements UserDetails {
 
     private static final long serialVersionUID = 1L;
 
@@ -50,8 +50,6 @@ public class UserAccount implements UserDetails{
             @JoinColumn(name = "user_acc_id", referencedColumnName = "user_acc_id") }, inverseJoinColumns = {
             @JoinColumn(name = "role_id", referencedColumnName = "role_id") })
     private List<Roles> roles;
-
-
 
     @OneToMany(mappedBy = "userAccount",fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<AdditionalRoles> additionalRoles;

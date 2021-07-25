@@ -4,8 +4,11 @@ import com.ics.oauth2server.common.entities.UserAccount;
 import com.ics.oauth2server.helper.APIResponse;
 import com.ics.oauth2server.helper.HelperExtension;
 import com.ics.oauth2server.security.models.CustomPrincipal;
-import com.ics.oauth2server.security.response.OTPVerificationResponse;
-import com.ics.oauth2server.security.response.ForgotPasswordResponse;
+import com.ics.oauth2server.useraccount.request.ChangePasswordRequest;
+import com.ics.oauth2server.useraccount.request.ResetPasswordRequest;
+import com.ics.oauth2server.useraccount.response.ChangePasswordResponse;
+import com.ics.oauth2server.useraccount.response.OTPVerificationResponse;
+import com.ics.oauth2server.useraccount.response.ForgotPasswordResponse;
 import com.ics.oauth2server.useraccount.services.UserAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -40,7 +43,7 @@ public class UserAccountController {
             },
             method = RequestMethod.POST
     )
-    ResponseEntity<APIResponse<ForgotPasswordResponse>> forgotPassword(@PathVariable(name = "userId",required = false) Long userId,
+    public ResponseEntity<APIResponse<ForgotPasswordResponse>> forgotPassword(@PathVariable(name = "userId",required = false) Long userId,
                                                                        @PathVariable(name = "username",required = false) String username,
                                                                        @RequestParam(name = "verificationType", required = true) String verificationType,
                                                                        CustomPrincipal principal,
@@ -53,20 +56,35 @@ public class UserAccountController {
     }
 
     @RequestMapping(path = "verify/otp/{otp}",method = RequestMethod.POST)
-    ResponseEntity<APIResponse<OTPVerificationResponse>> verifyOTP(@PathVariable(name = "otp") String otp){
+    public ResponseEntity<APIResponse<OTPVerificationResponse>> verifyOTP(@PathVariable(name = "otp") String otp){
         apiResponse = userAccountService.verifyOtp(otp);
         return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
     }
 
-    @RequestMapping(path = {"user-id/{id}","username/{username}"},method = RequestMethod.PUT)
-    ResponseEntity<APIResponse<UserAccount>> updateRoleAndPermission(@PathVariable(name = "id", required = false) Long id,
-                                                                     @PathVariable(name = "username", required = false) String username){
-        if(helperExtension.isNullOrEmpty(id)){
-            id = 0L;
-        }
-        apiResponse = userAccountService.updatePermissions(id,username,null,null);
+    @RequestMapping(
+            path = {
+                    "reset-password"
+            },
+            method = RequestMethod.PUT)
+    public ResponseEntity<APIResponse<ChangePasswordResponse>> resetPassword(@RequestBody ResetPasswordRequest request,
+                                                                             @RequestParam(name = "token",required = true) String token,
+                                                                             HttpServletRequest httpServletRequest){
+        apiResponse = userAccountService.resetPassword(token,request,httpServletRequest);
         return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
     }
 
+    @RequestMapping(
+            path = {
+                    "change-password/user/id/{id}",
+                    "change-password/user/username/{username}"
+            },
+            method = RequestMethod.PUT)
+    public ResponseEntity<APIResponse<ChangePasswordResponse>> changePassword(@PathVariable(name = "id", required = false) Long id,
+                                                                           @PathVariable(name = "username", required = false) String username,
+                                                                           @RequestBody ChangePasswordRequest request,
+                                                                           HttpServletRequest httpServletRequest){
+        apiResponse = userAccountService.changePassword(id,username,request,httpServletRequest);
+        return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
+    }
 
 }

@@ -12,8 +12,14 @@ import com.ics.oauth2server.otp.repository.OTPRepository;
 import com.ics.oauth2server.security.email.EmailServices;
 import com.ics.oauth2server.security.email.context.ForgetPasswordEmailContext;
 import com.ics.oauth2server.security.models.CustomPrincipal;
-import com.ics.oauth2server.security.response.ForgotPasswordResponse;
-import com.ics.oauth2server.security.response.OTPVerificationResponse;
+import com.ics.oauth2server.useraccount.exception.AccountNotExistException;
+import com.ics.oauth2server.useraccount.exception.InvalidPasswordException;
+import com.ics.oauth2server.useraccount.exception.InvalidTokenException;
+import com.ics.oauth2server.useraccount.request.ChangePasswordRequest;
+import com.ics.oauth2server.useraccount.request.ResetPasswordRequest;
+import com.ics.oauth2server.useraccount.response.ChangePasswordResponse;
+import com.ics.oauth2server.useraccount.response.ForgotPasswordResponse;
+import com.ics.oauth2server.useraccount.response.OTPVerificationResponse;
 import com.ics.oauth2server.security.token.SecureTokenService;
 import com.ics.oauth2server.security.token.repository.SecureTokenRepository;
 import com.ics.oauth2server.security.twilio.request.SMSRequest;
@@ -23,12 +29,14 @@ import com.ics.oauth2server.useraccount.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +48,7 @@ public class UserAccountServiceImpl implements UserAccountService{
     private List<UserAccount> userAccounts;
     private List<ForgotPasswordResponse> forgotPasswordResponses;
     private List<OTPVerificationResponse> otpVerificationResponses;
+    private List<ChangePasswordResponse> changePasswordResponses;
 
     @Value("${secure.otp.length}")
     private int otpLength;
@@ -52,6 +61,7 @@ public class UserAccountServiceImpl implements UserAccountService{
     private final SecureTokenService secureTokenService;
     private final SecureTokenRepository secureTokenRepository;
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public UserAccountServiceImpl(UserAccountRepository userAccountRepository,
@@ -61,7 +71,8 @@ public class UserAccountServiceImpl implements UserAccountService{
                                   OTPRepository smsRepository,
                                   EmailServices emailServices,
                                   TwilioService twilioService,
-                                  UserService userService) {
+                                  UserService userService,
+                                  PasswordEncoder passwordEncoder) {
         this.userAccountRepository = userAccountRepository;
         this.OTPService = OTPService;
         this.userService = userService;
@@ -70,6 +81,7 @@ public class UserAccountServiceImpl implements UserAccountService{
         this.smsRepository = smsRepository;
         this.emailServices = emailServices;
         this.twilioService = twilioService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -151,12 +163,66 @@ public class UserAccountServiceImpl implements UserAccountService{
     }
 
 
+    @Override
+    public APIResponse<ChangePasswordResponse> resetPassword(String token, ResetPasswordRequest request, HttpServletRequest httpServletRequest) {
+        // Check for token if token is valid or not
+        SecureToken secureToken = secureTokenService.findByToken(token);
+        if(helperExtension.isNullOrEmpty(secureToken)){
+            // throw invalid token exception
+            throw new InvalidTokenException("Token either expired or does not exist");
+        }
+        List<UserAccount> userAccounts = userAccountRepository
+                .get(secureToken.getUserAccount().getId(),secureToken.getUserAccount().getUsername(),null,true,null);
+        if(userAccounts.isEmpty()){
+            throw new AccountNotExistException(ConstantExtension.ACCOUNT_NOT_EXIST);
+        }
+        if (helperExtension.isNullOrEmpty(request.getNewPassword()) || helperExtension.isNullOrEmpty(request.getConfirmPassword())) {
+            throw new InvalidPasswordException("Password fields should not be empty!");
+        }
+        if(request.getNewPassword().equals(request.getConfirmPassword())){
+                changePasswordResponses  = new ArrayList<>();
+                ChangePasswordResponse changePasswordResponse = new ChangePasswordResponse();
+                changePasswordResponse.setId(userAccounts.get(0).getUserId());
+                changePasswordResponse.setUsername(userAccounts.get(0).getUsername());
+                changePasswordResponse.setEmailId(userAccounts.get(0).getEmail());
+                userAccounts.get(0).setUpdatedDate(new Date());
+                userAccounts.get(0).setPassword(passwordEncoder.encode(request.getConfirmPassword()));
+                secureTokenService.removeToken(secureToken);
+                userAccountRepository.saveOrUpdate(userAccounts.get(0));
+                changePasswordResponses.add(changePasswordResponse);
+                return new APIResponse<>(HttpStatus.OK.value(),HttpStatus.OK.toString(),"Password Changed",changePasswordResponses,httpServletRequest);
+        }
+        throw new InvalidPasswordException(ConstantExtension.ACCOUNT_PASSWORD_NOT_MATCH);
+    }
 
     @Override
     public APIResponse<UserAccount> updatePermissions(Long id, String username, List<String> rolesList, DatabaseHelper databaseHelper) {
         return null;
     }
 
+    @Override
+    public APIResponse<ChangePasswordResponse> changePassword(Long id, String username, ChangePasswordRequest request, HttpServletRequest httpServletRequest) {
+        if (helperExtension.isNullOrEmpty(request.getOldPassword()) || helperExtension.isNullOrEmpty(request.getNewPassword())) {
+            throw new InvalidPasswordException("Password field should not be empty!");
+        }
+        List<UserAccount> userAccounts = userAccountRepository.get(id,username,null,true,null);
+        if (!userAccounts.isEmpty()){
+            if (!passwordEncoder.matches(request.getOldPassword(),userAccounts.get(0).getPassword())){
+                throw new InvalidPasswordException(ConstantExtension.ACCOUNT_PASSWORD_NOT_MATCH);
+            }
+            changePasswordResponses = new ArrayList<>();
+            ChangePasswordResponse changePasswordResponse  = new ChangePasswordResponse();
+            userAccounts.get(0).setPassword(passwordEncoder.encode(request.getNewPassword()));
+            userAccounts.get(0).setUpdatedDate(new Date());
+            changePasswordResponse.setUsername(userAccounts.get(0).getUsername());
+            changePasswordResponse.setId(userAccounts.get(0).getUserId());
+            changePasswordResponse.setEmailId(userAccounts.get(0).getEmail());
+            changePasswordResponses.add(changePasswordResponse);
+            userAccountRepository.saveOrUpdate(userAccounts.get(0));
+            return new APIResponse<>(HttpStatus.OK.value(),HttpStatus.OK.toString(), "Password Change Success",changePasswordResponses,httpServletRequest);
+        }
+        return new APIResponse<>(HttpStatus.NOT_FOUND.value(),HttpStatus.NOT_FOUND.toString(), ConstantExtension.ACCOUNT_NOT_EXIST,changePasswordResponses,httpServletRequest);
+    }
 
     @Override
     public void sendSMSOfGeneratedOTP(final int lengthOfOTP, UserAccount userAccount){
@@ -178,6 +244,7 @@ public class UserAccountServiceImpl implements UserAccountService{
             e.printStackTrace();
         }
     }
+
 
 
     @Override
