@@ -27,8 +27,6 @@ public class CustomTokenEnhancer extends JwtAccessTokenConverter {
     private UserAccountRepository userAccountRepository;
 
 
-
-
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
         LOGGER.info("Enhancing the OATH2 access token...");

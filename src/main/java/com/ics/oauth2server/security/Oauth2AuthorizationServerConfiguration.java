@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.endpoint.TokenEndpointAuthenticationFilter;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
@@ -64,8 +65,9 @@ public class Oauth2AuthorizationServerConfiguration extends AuthorizationServerC
     @Bean
     public TokenStore tokenStore() {
         LOGGER.info("Token Store Executed "+jwtAccessTokenConverter());
+        //        return new JdbcTokenStore(dataSource);
+        //        return new CustomJwtTokenStore(jwtAccessTokenConverter());
         return new JwtTokenStore(jwtAccessTokenConverter());
-
     }
 
     @Bean
@@ -110,6 +112,7 @@ public class Oauth2AuthorizationServerConfiguration extends AuthorizationServerC
                 .authenticationManager(authenticationManager).userDetailsService(userDetailsService);
         if (checkUserScope)
             endpoints.requestFactory(requestFactory());
-
     }
+
+
 }

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping(path = "${api.version}/users/",produces = MediaType.APPLICATION_JSON_VALUE,consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -48,7 +49,7 @@ public class UserController {
     }
 
     @RequestMapping(path = "create",method = RequestMethod.POST)
-    ResponseEntity<APIResponse<User>> createNewUser(@RequestBody UserRequest userRequest){
+    ResponseEntity<APIResponse<User>> createNewUser(@RequestBody @Valid UserRequest userRequest){
         apiResponse = userService.save(userRequest);
         return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
     }

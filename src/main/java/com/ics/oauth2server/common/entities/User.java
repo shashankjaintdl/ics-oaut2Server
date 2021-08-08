@@ -15,10 +15,10 @@ public @Data class User extends BaseEntity implements Serializable {
     @GenericGenerator(strategy = "native", name = "native")
     private long id;
 
-    @Column(name = "email_id",unique = true)
+    @Column(name = "email_id",unique = true,columnDefinition = "TEXT")
     private String emailId;
 
-    @Column(name = "username",unique = true,updatable = false)
+    @Column(name = "username",unique = true,updatable = false,columnDefinition = "TEXT")
     private String username;
 
     @Column(name="first_name")

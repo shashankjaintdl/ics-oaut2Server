@@ -1,6 +1,5 @@
 package com.ics.oauth2server.useraccount;
 
-import com.ics.oauth2server.common.entities.UserAccount;
 import com.ics.oauth2server.helper.APIResponse;
 import com.ics.oauth2server.helper.HelperExtension;
 import com.ics.oauth2server.security.models.CustomPrincipal;
@@ -44,10 +43,10 @@ public class UserAccountController {
             method = RequestMethod.POST
     )
     public ResponseEntity<APIResponse<ForgotPasswordResponse>> forgotPassword(@PathVariable(name = "userId",required = false) Long userId,
-                                                                       @PathVariable(name = "username",required = false) String username,
-                                                                       @RequestParam(name = "verificationType", required = true) String verificationType,
-                                                                       CustomPrincipal principal,
-                                                                       HttpServletRequest httpServletRequest){
+                                                                              @PathVariable(name = "username",required = false) String username,
+                                                                              @RequestParam(name = "verificationType", required = true) String verificationType,
+                                                                              CustomPrincipal principal,
+                                                                              HttpServletRequest httpServletRequest){
         if (helperExtension.isNullOrEmpty(userId)){
             userId = 0L;
         }
@@ -55,7 +54,11 @@ public class UserAccountController {
         return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
     }
 
-    @RequestMapping(path = "verify/otp/{otp}",method = RequestMethod.POST)
+    @RequestMapping(
+            path = {
+                            "verify/otp/{otp}"
+            },
+            method = RequestMethod.POST)
     public ResponseEntity<APIResponse<OTPVerificationResponse>> verifyOTP(@PathVariable(name = "otp") String otp){
         apiResponse = userAccountService.verifyOtp(otp);
         return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
@@ -80,11 +83,36 @@ public class UserAccountController {
             },
             method = RequestMethod.PUT)
     public ResponseEntity<APIResponse<ChangePasswordResponse>> changePassword(@PathVariable(name = "id", required = false) Long id,
-                                                                           @PathVariable(name = "username", required = false) String username,
-                                                                           @RequestBody ChangePasswordRequest request,
-                                                                           HttpServletRequest httpServletRequest){
+                                                                              @PathVariable(name = "username", required = false) String username,
+                                                                              @RequestBody ChangePasswordRequest request,
+                                                                              HttpServletRequest httpServletRequest){
         apiResponse = userAccountService.changePassword(id,username,request,httpServletRequest);
         return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
     }
 
+
+    @RequestMapping(
+            path = {
+                    "disable-account/id/{id}",
+                    "disable-account/username/{username}"
+            },
+            method = RequestMethod.POST
+    )
+    public ResponseEntity<APIResponse<?>> disableAccount(@PathVariable(name = "id",required = false) Long id,
+                                                         @PathVariable(name = "username", required = false) String username,
+                                                         HttpServletRequest httpServletRequest){
+        apiResponse = userAccountService.disableAccount(id,username,httpServletRequest);
+        return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
+    }
+
+    @RequestMapping(
+            path = {
+                    "verify"
+            },
+            method = RequestMethod.POST)
+    public ResponseEntity<APIResponse<ChangePasswordResponse>> verifyToken(@RequestParam(name = "token",required = true) String token,
+                                                                           HttpServletRequest httpServletRequest){
+        apiResponse = userAccountService.verifyUserAccount(token,httpServletRequest);
+        return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
+    }
 }

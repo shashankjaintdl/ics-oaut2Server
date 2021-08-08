@@ -2,6 +2,8 @@ package com.ics.oauth2server.useraccount.exception.handler;
 
 import com.ics.oauth2server.helper.APIResponse;
 import com.ics.oauth2server.helper.HelperExtension;
+import com.ics.oauth2server.useraccount.exception.AccountNotExistException;
+import com.ics.oauth2server.useraccount.exception.InvalidOTPException;
 import com.ics.oauth2server.useraccount.exception.InvalidPasswordException;
 import com.ics.oauth2server.useraccount.exception.InvalidTokenException;
 import org.slf4j.Logger;
@@ -26,7 +28,7 @@ public class UserAccountExceptionHandler {
     private Collection<StackTraceElement> stackTraceElements;
     HelperExtension helperExtension = new HelperExtension();
 
-    @ExceptionHandler(value = {InvalidTokenException.class, InvalidPasswordException.class})
+    @ExceptionHandler(value = {InvalidTokenException.class, InvalidPasswordException.class, InvalidOTPException.class})
     ResponseEntity<Object> handleInvalidException(RuntimeException ex, HttpServletRequest httpServletRequest){
         String message = "";
         if(!helperExtension.isNullOrEmpty(ex.getMessage())){
@@ -43,7 +45,7 @@ public class UserAccountExceptionHandler {
     }
 
 
-    @ExceptionHandler(value = {})
+    @ExceptionHandler(value = {AccountNotExistException.class})
     ResponseEntity<Object> handleAccountNotExistException(RuntimeException ex, HttpServletRequest httpServletRequest){
         String message = "";
         if(!helperExtension.isNullOrEmpty(ex.getMessage())){

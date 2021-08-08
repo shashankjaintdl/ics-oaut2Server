@@ -36,7 +36,7 @@ public class UserAccountRepositoryImpl extends BaseRepositoryImpl<UserAccount> i
             predicateList.add(criteriaBuilder.equal(root.get("username"), username));
         }
         if (!helperExtension.isNullOrEmpty(emailId)){
-            predicateList.add(criteriaBuilder.equal(root.get("emailId"), emailId));
+            predicateList.add(criteriaBuilder.equal(root.get("email"), emailId));
         }
         if(!helperExtension.isNullOrEmpty(isFlag)){
             predicateList.add(criteriaBuilder.equal(root.get("isFlag"), isFlag));

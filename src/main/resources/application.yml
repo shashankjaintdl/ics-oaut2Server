@@ -10,6 +10,8 @@ server:
   servlet:
     context-path: /authenticationAppServer
 
+
+
 security:
   oauth2:
     resource:

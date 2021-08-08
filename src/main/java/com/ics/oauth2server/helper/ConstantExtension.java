@@ -17,6 +17,9 @@ public class ConstantExtension {
     public static String ACCOUNT_LOCKED = "Your account is locked after multiple attempts";
     public static String ACCOUNT_PASSWORD_EXPIRED = "Account password has been expired";
     public static String ACCOUNT_PASSWORD_NOT_MATCH = "Password does not match";
+    public static String ACCOUNT_PASSWORD_CHANGE_SUCCESS = "Password has been changed Successfully";
+    public static String ACCOUNT_VERIFIED = "Account has been verified successfully";
+
 
 
 

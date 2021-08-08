@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService{
         String message = userRepository.exist(user);
         List<UserAccount> userAccounts = userAccountRepository.get(0L,userRequest.getUsername(),userRequest.getEmailId(),null,null);
         if(!helperExtension.isNullOrEmpty(message) || !userAccounts.isEmpty()){
-            throw new UserAlreadyExistException(ConstantExtension.ACCOUNT_ALREADY_EXIST+  "With username = "+ user.getUsername());
+                throw new UserAlreadyExistException(ConstantExtension.ACCOUNT_ALREADY_EXIST);
         }
         try {
             user.setCreatedDate(currentDate);
