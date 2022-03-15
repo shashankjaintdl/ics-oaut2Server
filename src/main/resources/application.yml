@@ -34,7 +34,7 @@ logging:
 
 aws:
   awsId: AKIA4KKLS7OTZ3EQV3G4
-  awsKey: AD9tkHJVcVIZ394/eORHvpJaGGoarUWGEJPp
+  awsKey: AD9tkHJVcVIZ394/eORHvpJaGGoarUWGEJPptr2
   s3:
     region: ap-south-1
     bucketName: oauth2testbucket
